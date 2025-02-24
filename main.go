@@ -2,15 +2,25 @@ package main
 
 import (
 	"clickhouse-sql-processor/visitors"
+	"flag"
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"log"
 	"log/slog"
+	"os"
 )
 
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
-	query := "SELECT `ch`.`id` as i, timestamp FROM clickhouse as ch WHERE ch.timestamp > '2025.02.12 15:32' AND timestamp < '2025.02.13 01:12'"
-	parser := clickhouse.NewParser(query)
-	// Parse query into AST
+
+	queryFile := flag.String("query", "testdata/query_0.sql", "SQL query file")
+	flag.Parse()
+
+	data, err := os.ReadFile(*queryFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	parser := clickhouse.NewParser(string(data))
 	statements, err := parser.ParseStmts()
 	if err != nil {
 		slog.Error("parse statements error", err)

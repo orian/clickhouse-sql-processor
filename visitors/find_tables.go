@@ -14,7 +14,7 @@ type FindTables struct {
 	Names   []string
 }
 
-func (v *FindTables) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error {
+func (f *FindTables) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error {
 	slog.Info("", "db", expr.Database, "table", expr.Table.Name, "column", expr.Column.Name)
 	//expr.Database.Name
 	//expr.Table.Name
@@ -23,8 +23,8 @@ func (v *FindTables) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error 
 	return nil
 }
 
-func (v *FindTables) VisitSelectItem(expr *parser.SelectItem) error {
-	fmt.Println("column expr: ", expr.Expr, expr.Alias)
+func (f *FindTables) VisitSelectItem(expr *parser.SelectItem) error {
+	fmt.Printf("column expr: %s as %s\n", expr.Expr, expr.Alias)
 	return nil
 }
 
