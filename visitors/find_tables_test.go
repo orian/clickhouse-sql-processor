@@ -149,6 +149,42 @@ func TestFindTables_RunFindTables(t *testing.T) {
 			expectedNames: []string{"db1.table1"},
 			expectedError: false,
 		},
+		{
+			name:          "SELECT with multiple joins",
+			sql:           "SELECT * FROM table1 JOIN table2 ON table1.id = table2.id JOIN table3 ON table2.id = table3.id",
+			expectedNames: []string{"table1", "table2", "table3"},
+			expectedError: false,
+		},
+		{
+			name:          "SELECT with multiple subqueries",
+			sql:           "SELECT * FROM (SELECT * FROM table1) JOIN (SELECT * FROM table2) ON table1.id = table2.id",
+			expectedNames: []string{"table1", "table2"},
+			expectedError: false,
+		},
+		{
+			name:          "SELECT with union",
+			sql:           "SELECT * FROM table1 UNION ALL SELECT * FROM table2",
+			expectedNames: []string{"table1", "table2"},
+			expectedError: false,
+		},
+		{
+			name: "Complex query with nested subselects, join, and IN",
+			sql: `
+				SELECT *
+				FROM table1
+					JOIN table4 ON table1.id = table4.table1_id
+				WHERE id IN (
+					SELECT id
+					FROM (
+						SELECT id
+						FROM table2
+						JOIN table3 ON table2.id = table3.table2_id
+					) AS subquery1
+				)
+			`,
+			expectedNames: []string{"table1", "table4", "table2", "table3"},
+			expectedError: false,
+		},
 	}
 
 	for _, tc := range testCases {
