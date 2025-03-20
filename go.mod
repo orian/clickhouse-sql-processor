@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/AfterShip/clickhouse-sql-parser v0.4.4
 	github.com/davecgh/go-spew v1.1.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
@@ -13,4 +13,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/AfterShip/clickhouse-sql-parser => github.com/orian/clickhouse-sql-parser v0.0.0-20250301225821-9825d50f553f
+// go list -m -json github.com/orian/clickhouse-sql-parser@refactor-visitor
+replace github.com/AfterShip/clickhouse-sql-parser => github.com/orian/clickhouse-sql-parser v0.0.0-20250320231029-26b1c0c67bfb

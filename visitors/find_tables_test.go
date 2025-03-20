@@ -99,7 +99,7 @@ func TestFindTables_RunFindTables(t *testing.T) {
 			name:          "Invalid query",
 			sql:           "SELECT * FROM",
 			expectedNames: []string{},
-			expectedError: false,
+			expectedError: true,
 		},
 		{
 			name:          "insert query",
@@ -164,6 +164,7 @@ func TestFindTables_RunFindTables(t *testing.T) {
 				assert.Equal(t, tc.expectedNames, []string{})
 				return
 			}
+
 			names, err := RunFindTables(statements[0])
 			if tc.expectedError {
 				assert.Error(t, err)
