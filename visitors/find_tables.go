@@ -7,6 +7,27 @@ import (
 	"log/slog"
 )
 
+type ColumnRef struct {
+	Name      string
+	SourceRef Source
+}
+
+type Source interface {
+	Name() string
+	Available() []string
+	Selected() []string
+}
+
+type FuncSource struct{}
+
+type TableSource struct {
+	Name string
+}
+
+type JoinSource struct{}
+
+type SelectSource struct{}
+
 type FindTables struct {
 	parser.DefaultASTVisitor
 
@@ -15,7 +36,11 @@ type FindTables struct {
 }
 
 func (f *FindTables) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error {
+	err := f.DefaultASTVisitor.VisitColumnIdentifier(expr)
 	slog.Info("", "db", expr.Database, "table", expr.Table.Name, "column", expr.Column.Name)
+	if err != nil {
+		return err
+	}
 	//expr.Database.Name
 	//expr.Table.Name
 	//expr.Column.Name
@@ -24,28 +49,47 @@ func (f *FindTables) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error 
 }
 
 func (f *FindTables) VisitSelectItem(expr *parser.SelectItem) error {
+	err := f.DefaultASTVisitor.VisitSelectItem(expr)
 	fmt.Printf("column expr: %s as %s\n", expr.Expr, expr.Alias)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (f *FindTables) VisitAliasExpr(expr *parser.AliasExpr) error {
+	err := f.DefaultASTVisitor.VisitAliasExpr(expr)
 	fmt.Printf("I am an alias: %s\n", spew.Sdump(expr))
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (f *FindTables) VisitTableIdentifier(expr *parser.TableIdentifier) error {
+	err := f.DefaultASTVisitor.VisitTableIdentifier(expr)
+	if err == nil {
+		f.Names = append(f.Names, expr.String())
+	}
+	return err
 }
 
 func (f *FindTables) VisitTableExpr(expr *parser.TableExpr) error {
-	//fmt.Println()
-	fmt.Println(spew.Sdump(expr))
-	return nil
+	err := f.DefaultASTVisitor.VisitTableExpr(expr)
+	fmt.Println("table expression", spew.Sdump(expr))
+	return err
 }
 
 func (f *FindTables) VisitFromExpr(expr *parser.FromClause) error {
+	err := f.DefaultASTVisitor.VisitFromExpr(expr)
 	fmt.Println(expr.String())
-	return nil
+	return err
 }
 
 func NewFindTables() *FindTables {
-	return &FindTables{}
+	v := &FindTables{}
+	v.Self = v
+	return v
 }
 
 func RunFindTables(node parser.Expr) ([]string, error) {

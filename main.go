@@ -12,7 +12,7 @@ import (
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
-	queryFile := flag.String("query", "testdata/query_0.sql", "SQL query file")
+	queryFile := flag.String("query", "testdata/query_4.sql", "SQL query file")
 	flag.Parse()
 
 	data, err := os.ReadFile(*queryFile)
