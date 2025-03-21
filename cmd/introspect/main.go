@@ -13,7 +13,7 @@ import (
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	// Replace with your ClickHouse connection details
-	dsn := "clickhouse://default:@localhost:9000/movie_rentals"
+	dsn := "clickhouse://default:default@localhost:9000/movie_rentals"
 
 	db, err := sql.Open("clickhouse", dsn)
 	if err != nil {

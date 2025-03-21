@@ -112,9 +112,8 @@ func introspectTable(ctx context.Context, db *sql.DB, dbName, tableName string) 
 	var columns []Column
 	var engine string
 	for rows.Next() {
-		var columnName, columnType, columnDefaultType, columnComment, codecExpression string
-		var columnNullable string
-		if err := rows.Scan(&columnName, &columnType, &columnDefaultType, &columnNullable, &columnComment, &codecExpression); err != nil {
+		var columnName, columnType, columnDefaultType, defaultExpression, columnComment, codecExpression, ttlExpression string
+		if err := rows.Scan(&columnName, &columnType, &columnDefaultType, &defaultExpression, &columnComment, &codecExpression, &ttlExpression); err != nil {
 			return nil, fmt.Errorf("failed to scan column description: %w", err)
 		}
 		if columnName == "engine" {

@@ -4,6 +4,9 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse-server
+    environment:
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=default
     ports:
       - "8123:8123" # HTTP interface
       - "9000:9000" # Native interface
