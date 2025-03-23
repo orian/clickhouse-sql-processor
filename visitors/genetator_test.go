@@ -75,8 +75,61 @@ func ExprEq(field string, ct datamodels.ColumnType, value interface{}) Generator
 	}
 }
 
+func ExprLT(field string, ct datamodels.ColumnType, value interface{}) Generator {
+	return &generatorLT{
+		field: field,
+		ct:    ct,
+		value: value,
+	}
+}
+
 type Generator interface {
 	Generate() []Row
+}
+
+type generatorLT struct {
+	field string
+	ct    datamodels.ColumnType
+	value interface{}
+}
+
+func (g *generatorLT) Generate() []Row {
+	vals := generateLtValues(g.ct, g.value)
+	var rows []Row
+	for _, v := range vals {
+		rows = append(rows, Row{
+			g.field: v,
+		})
+	}
+	return rows
+}
+
+func generateLtValues(ct datamodels.ColumnType, value interface{}) []interface{} {
+	switch v := value.(type) {
+	case int:
+		return []interface{}{v, v - 1}
+	case float32:
+		return []interface{}{v, v - 1.0}
+	case float64:
+		return []interface{}{v, v - 1.0}
+	case string:
+		if ct == datamodels.String {
+			return []interface{}{v, v + "a"}
+		} else if ct == datamodels.Date {
+			date, err := time.Parse("2006-01-02", v)
+			if err != nil {
+				return []interface{}{v}
+			}
+			return []interface{}{v, date.AddDate(0, 0, -1).Format("2006-01-02")}
+		}
+	case bool:
+		return []interface{}{v, !v}
+	case time.Time:
+		return []interface{}{v, v.Add(-time.Hour * 24)}
+	default:
+		return []interface{}{v}
+	}
+	return nil
 }
 
 type generatorEq struct {
@@ -197,6 +250,24 @@ func TestExprAndGenerator(t *testing.T) {
 	require.NoError(t, err)
 
 	golden := "testdata/expr_and.golden"
+	if *update {
+		err := os.WriteFile(golden, gotJSON, 0644)
+		require.NoError(t, err)
+	}
+
+	want, err := os.ReadFile(golden)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(want), string(gotJSON))
+}
+
+func TestExprLTGenerator(t *testing.T) {
+	got := ExprLT("timestamp", datamodels.Date, "2025-02-15").Generate()
+
+	gotJSON, err := json.MarshalIndent(got, "", "  ")
+	require.NoError(t, err)
+
+	golden := "testdata/expr_lt.golden"
 	if *update {
 		err := os.WriteFile(golden, gotJSON, 0644)
 		require.NoError(t, err)
