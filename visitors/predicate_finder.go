@@ -26,8 +26,17 @@ import (
 type FindPredicateColumns struct {
 	parser.DefaultASTVisitor
 
-	Columns []string
-	Names   []string
+	ctx ASTContext
+
+	Columns    []string
+	Names      []string
+	Predicates []Predicate
+}
+
+type Predicate struct {
+	Column   string
+	Operator string
+	Value    string
 }
 
 func (f *FindPredicateColumns) VisitColumnIdentifier(expr *parser.ColumnIdentifier) error {
@@ -62,7 +71,16 @@ func (f *FindPredicateColumns) VisitHavingExpr(expr *parser.HavingClause) error 
 
 func (f *FindPredicateColumns) VisitGroupByExpr(expr *parser.GroupByClause) error {
 	slog.Info("Visiting GROUP BY clause")
+	defer f.ctx.With(ContextKindGroupBy)
 	err := f.DefaultASTVisitor.VisitGroupByExpr(expr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *FindPredicateColumns) VisitColumnExprList(expr *parser.ColumnExprList) error {
+	err := f.DefaultASTVisitor.VisitColumnExprList(expr)
 	if err != nil {
 		return err
 	}
@@ -83,6 +101,15 @@ func (f *FindPredicateColumns) VisitBinaryExpr(expr *parser.BinaryOperation) err
 	err := f.DefaultASTVisitor.VisitBinaryExpr(expr)
 	if err != nil {
 		return err
+	}
+	if column, ok := expr.LeftExpr.(*parser.Ident); ok {
+		if number, ok := expr.RightExpr.(*parser.NumberLiteral); ok {
+			f.Predicates = append(f.Predicates, Predicate{
+				Column:   column.Name,
+				Operator: string(expr.Operation),
+				Value:    number.String(),
+			})
+		}
 	}
 	return nil
 }
@@ -110,11 +137,11 @@ func NewFindPredicateColumns() *FindPredicateColumns {
 	return v
 }
 
-func RunFindPredicateColumns(node parser.Expr) ([]string, error) {
+func RunFindPredicateColumns(node parser.Expr) ([]string, []Predicate, error) {
 	v := NewFindPredicateColumns()
 	err := node.Accept(v)
 	if err != nil {
-		return nil, fmt.Errorf("error running FindPredicateColumns: %w", err)
+		return nil, nil, fmt.Errorf("error running FindPredicateColumns: %w", err)
 	}
-	return v.Columns, nil
+	return v.Columns, v.Predicates, nil
 }
